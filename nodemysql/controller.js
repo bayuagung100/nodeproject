@@ -3,9 +3,41 @@
 var response = require('./res');
 var koneksi = require('./config');
 
+var request = require('request');
+var session = require('express-session');
+
+
 
 var formidable = require('formidable');
 var mv = require('mv');
+
+exports.login = function (req, res) {
+    // membuat objek form dari formidable
+    var form = new formidable.IncomingForm();
+    // manangani upload file
+    form.parse(req, function (err, fields, files) {
+
+        var username = fields.username;
+        var password = fields.password;
+        if (username && password) {
+            koneksi.query('SELECT * FROM user WHERE username =? AND password =?', [username, password], function (error, rows, fields) {
+                if (error) {
+                    console.log(error);
+                } else if (rows.length > 0) {
+                    req.session.login = true;
+                    req.session.username = username;
+                    req.session.password = password;
+                    response.auth(req.session, rows, res);
+                } else {
+                    response.ok("Incorrect Username and/or Password!", res);
+                }
+            });
+            
+        }
+
+    });
+};
+
 
 exports.index = function (req, res) {
     response.ok("Selamat datang di restfull api dengan node js dan mysql", res);
@@ -15,10 +47,12 @@ exports.user = function (req, res) {
     koneksi.query("SELECT * FROM user", function (error, rows, fields) {
         if (error) {
             console.log(error);
-        } else { 
+        } else {
             response.ok(rows, res);
+            console.log(rows);
         }
     });
+
 };
 
 exports.userbyid = function (req, res) {
@@ -29,8 +63,9 @@ exports.userbyid = function (req, res) {
             console.log(error);
         } else {
             response.ok(rows, res);
-            // console.log(res);
+            // console.log(req.params);
         }
+
     });
 };
 
@@ -75,7 +110,7 @@ exports.createuser = function (req, res) {
                 } else {
                     response.ok(rows, res);
                     // console.log(res);
-                } 
+                }
             });
         });
     });
@@ -151,7 +186,7 @@ exports.deleteuser = function (req, res) {
     var form = new formidable.IncomingForm();
 
     // manangani upload file
-    form.parse(req, function (err, fields, files) {        
+    form.parse(req, function (err, fields, files) {
         var id = fields.id;
 
         koneksi.query("DELETE FROM user WHERE id=?", [id], function (error, rows, fields) {

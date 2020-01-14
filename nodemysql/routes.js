@@ -21,4 +21,7 @@ module.exports = function (app) {
     //url delete user
     app.route('/user').delete(url.deleteuser);
 
+    //url request
+    app.route('/auth').post(url.login);
+
 };
